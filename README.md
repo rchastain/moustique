@@ -1,0 +1,2 @@
+# moustique
+UCI chess engine
