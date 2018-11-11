@@ -1,6 +1,8 @@
 
 program Moustique;
 
+
+{$mode objfpc}{$H+}
 {$APPTYPE CONSOLE}
 
 uses

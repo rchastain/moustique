@@ -1,6 +1,9 @@
 
 unit Validator;
 
+
+{$mode objfpc}{$H+}
+
 interface
 
 function IsFEN(const aStr: string): boolean;
@@ -85,7 +88,7 @@ begin
       begin
         s := b[i];
         repeat
-          s := e.Replace(s, ExpandEmptySquares());
+          s := e.Replace(s, @ExpandEmptySquares);
         until not ExecRegExpr('\d', s);
         (*
         ToLog(Format('%s %s', [{$I %LINE%}, s]));
