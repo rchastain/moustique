@@ -716,14 +716,14 @@ finddtext=
 findhistory=0
 findoptions=1
 editpos=8
- 0,0
+ 0,19
  0,-1073741823
  0,-1073741823
  0,-1073741823
  0,-1073741823
  0,-1073741823
  0,-1073741823
- 0,0
+ 0,-1073741823
 bookmarks0=0
 bookmarks1=0
 bookmarks2=0
@@ -1236,9 +1236,9 @@ windowlayout=547
  [debuggerfo.file_history]
  value=/home/fred/moustique/moustique.pas
  history=20
+  /home/fred/moustique/moustique.pas
   /home/fred/moustique/validator.pas
   /home/fred/moustique/mater.pas
-  /home/fred/moustique/moustique.pas
   /home/fred/moustique_git/moustique/moustique.pas
   /home/fred/ideu/README.TXT
   /home/fred/ideu/src/mseconsts.pas
@@ -1283,7 +1283,7 @@ windowlayout=547
  irqoff=0
  splitdir=0
  useroptions=268451947
- stackedunder=targetconsolefo
+ stackedunder=stackfo
  parent=
  mdistate=0
  nx=0
