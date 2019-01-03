@@ -7,3 +7,4 @@ Moustique is the assembly of two programs: a standard chess program (searching t
 
 The mate solver is an adaptation of a program by Valentin Albillo. The main chess program is an adaptation of a program by Jürgen Schlottke.
 
+![alt text](https://github.com/rchastain/moustique/blob/master/Farman%20F455%20Moustique.bmp)
