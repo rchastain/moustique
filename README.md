@@ -3,8 +3,10 @@
 
 UCI chess engine written in Pascal by Roland Chastain.
 
-Moustique is the assembly of two programs: a standard chess program (searching the best move) and a mate solver.
+Moustique is a chess program with a console interface respecting the Universal Chess Interface protocol.
 
-The mate solver is an adaptation of a program by Valentin Albillo. The main chess program is an adaptation of a program by Jürgen Schlottke.
+Moustique is the assembly of two programs: one who searches the best move, the other who searches only checkmate.
+
+The standard chess program is an adaptation of a program by Jürgen Schlottke. The mate solver is an adaptation of a program by Valentin Albillo.
 
 ![alt text](https://github.com/rchastain/moustique/blob/master/Farman%20F455%20Moustique.bmp)
