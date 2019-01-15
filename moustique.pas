@@ -1,16 +1,22 @@
 
 program Moustique;
 
+{$mode objfpc}{$H+}
 {$APPTYPE CONSOLE}
+{$DEFINE UseCThreads}
 
 uses
+{$IFDEF UNIX}
+  cthreads, 
+  cwstring, 
+{$ENDIF}
   Classes,
   SysUtils,
   Player,
   Parser,
   Log;
 
-{$INCLUDE VERSION.inc}
+{$INCLUDE version.inc}
 
 var
   vPosition: string;
