@@ -36,7 +36,9 @@ initialization
     Append(vLog)
   else
     Rewrite(vLog);
+    
 finalization
   Close(vLog);
 {$ENDIF}
+
 end.

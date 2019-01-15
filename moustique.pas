@@ -1,23 +1,16 @@
 
 program Moustique;
 
-
-{$mode objfpc}{$H+}
 {$APPTYPE CONSOLE}
-{$DEFINE UseCThreads}
 
 uses
-{$IFDEF UNIX}
-  cthreads, 
-  cwstring, 
-{$ENDIF}
   Classes,
   SysUtils,
   Player,
   Parser,
   Log;
 
-{$INCLUDE version.inc}
+{$INCLUDE VERSION.inc}
 
 var
   vPosition: string;
@@ -84,12 +77,9 @@ begin
       cmdPositionStartPos:
         begin
           vPosition := CONVENTSTARTPOS;
-          if vParser.moves.Count > 0 then
-          begin
-            SetLength(vMovesArray, vParser.moves.Count);
-            for vIndex := 0 to Pred(vParser.moves.Count) do
-              vMovesArray[vIndex] := vParser.moves[vIndex];
-          end;
+          SetLength(vMovesArray, vParser.moves.Count);
+          for vIndex := 0 to Pred(vParser.moves.Count) do
+            vMovesArray[vIndex] := vParser.moves[vIndex];
         end;
         
       cmdGo:
@@ -108,7 +98,6 @@ begin
       
       cmdStop:
         begin
-          //Player.DoReturn();
         end;
       
       cmdUnknown:

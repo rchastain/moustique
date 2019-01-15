@@ -14,7 +14,7 @@ const
 {
   711 mate problems solved by Mater.
   
-  The problems were extracted from Franz Huber database.
+  Problems extracted from Franz Huber database.
   
   https://fhub.jimdo.com/
 }

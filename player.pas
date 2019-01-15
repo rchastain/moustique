@@ -13,9 +13,6 @@ unit Player;
 
 interface
 
-uses
-  SysUtils, Classes;
-
 const
   cMinDepth = 3;
   cMaxDepth = 5;
@@ -34,7 +31,7 @@ function GetPlayerMove(
 implementation
 
 uses
-  Mater, Schach, Validator, Log;
+  SysUtils, Classes, Mater, Schach, Validator, Log;
 
 function Clock(): int64;
 begin
@@ -42,13 +39,13 @@ begin
 end;
 
 var
-  vProgram: TJSChess;
+  vProgram: TChessProgram;
   
 function GetPlayerMove(const aFENRecord: string; const aMovesArray: array of string; const aMinDepth, aMaxDepth, aMSDepth1, aMSDepth2: integer): string;
 var
   vMaterMove,
   vProgMove: string;
-  vErr: TBestMoveError;
+  vCode: TBestMoveExitCode;
   vIndex: integer;
   vPosition: string;
 begin
@@ -62,27 +59,29 @@ begin
     vPosition := vProgram.FENRecord();
   end;
   vProgram.SetSearchDepth(aMinDepth, aMaxDepth);
-  vProgMove := vProgram.BestMove(vErr);
+  vProgMove := vProgram.BestMove(vCode);
   vMaterMove := SolveMate(vPosition, aMSDepth1, TRUE);
   if vMaterMove = '' then vMaterMove := SolveMate(vPosition, aMSDepth2, FALSE);
   if vMaterMove <> '' then
   begin
     result := vMaterMove;
-    TLog.Append('rem mater');
+    TLog.Append('rem mater best move');
   end else
     if vProgMove <> '' then
     begin
       result := vProgMove;
-      TLog.Append(Format('rem schach %d', [Ord(vErr)]));
+      TLog.Append(Format('rem schach best move, exit code %d', [Ord(vCode)]));
     end else
     begin
       result := 'a1a1';
-      TLog.Append('rem no move');
+      TLog.Append('rem error');
     end;
 end;
 
 initialization
-  vProgram := TJSChess.Create;
+  vProgram := TChessProgram.Create;
+  
 finalization
   vProgram.Free;
+  
 end.

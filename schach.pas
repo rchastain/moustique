@@ -2,7 +2,7 @@
 unit Schach;
 
 interface
-  
+
 type
   TChessboard = array[-10..109] of integer;
 
@@ -59,9 +59,9 @@ type
       property chessboard: TChessboard read board;
   end;
   
-  TBestMoveError = (errSuccess, errCheck, errCheckmate, errStalemate, errMoveNotFound);
+  TBestMoveExitCode = (ecSuccess, ecCheck, ecCheckmate, ecStalemate, ecError);
   
-  TJSChess = class
+  TChessProgram = class
     strict private
       initialPos,
       currentPos: TChessPosition;
@@ -73,7 +73,7 @@ type
       procedure SetPosition(const aFENRecord: string);
       function PlayMove(const aMove: string): boolean;
       function BestMoveIndex(const aRecursiveEvaluationResult: integer): integer;
-      function BestMove(out aErr: TBestMoveError): string; overload;
+      function BestMove(out aErr: TBestMoveExitCode): string; overload;
       function BestMove(): string; overload;
       procedure SetSearchDepth(const aMinDepth, aMaxDepth: integer);
       function CurrentBoardAsText(const aPretty: boolean = true): string;
@@ -86,7 +86,7 @@ var
 implementation
 
 uses
-  Classes, SysUtils, TypInfo;
+  Classes, SysUtils, TypInfo, Log;
 
 var
   minDepth: integer = 3;
@@ -128,11 +128,22 @@ begin
   result[3] := DigitToLetter(result[3]);
 end;
 
-function MoveToInt(aMove: string): integer;
+procedure MoveToInt(const aMoveStr: string; var aMove, aPromotion: integer);
+var
+  s: string;
 begin
-  aMove[1] := LetterToDigit(aMove[1]);
-  aMove[3] := LetterToDigit(aMove[3]);
-  result := StrToInt(aMove);
+  s := Copy(aMoveStr, 1, 4);
+  s[1] := LetterToDigit(s[1]);
+  s[3] := LetterToDigit(s[3]);
+  aMove := StrToInt(s);
+  aPromotion := 0;
+  if Length(aMoveStr) > 4 then
+    case aMoveStr[5] of
+      'b': aPromotion := cBishop;
+      'n': aPromotion := cKnight;
+      'r': aPromotion := cRook;
+      'q': aPromotion := cQueen;
+    end;
 end;
 
 function ComputeHalfmoves(const aFENRecord: string): integer;
@@ -657,33 +668,32 @@ begin
   );
 end;
 
-constructor TJSChess.Create;
+constructor TChessProgram.Create;
 begin
   inherited Create;
   initialPos := TChessPosition.Create(conventional_start_position);
   currentPos := TChessPosition.Create;
 end;
 
-destructor TJSChess.Destroy;
+destructor TChessProgram.Destroy;
 begin
   currentPos.Free;
   initialPos.Free;
   inherited Destroy;
 end;
 
-procedure TJSChess.SetPosition(const aFENRecord: string);
+procedure TChessProgram.SetPosition(const aFENRecord: string);
 begin
   currentPos.SetPositionFromFENRecord(aFENRecord);
   halfmoves := ComputeHalfmoves(aFENRecord);
 end;
 
-function TJSChess.PlayMove(const aMove: string): boolean;
+function TChessProgram.PlayMove(const aMove: string): boolean;
 var
   aux: TChessPosition;
-  i,
-  a, b: integer;
+  i, a, b, promo: integer;
 begin
-  i := MoveToInt(aMove);
+  MoveToInt(aMove, i, promo);
   a := i div 100;
   b := i mod 100;
   currentPos.GenerateAllMoves;
@@ -692,20 +702,20 @@ begin
   begin
     aux := TChessPosition.Create;
     aux.SetPositionFromPosition(currentPos);
-    aux.MovePiece(a, b, cQueen);
+    aux.MovePiece(a, b, promo);
     aux.activeColor := cBlack * aux.activeColor;
     if aux.Check then
       result := false
     else
     begin
-      currentPos.MovePiece(a, b, cQueen);
+      currentPos.MovePiece(a, b, promo);
       Inc(halfmoves);
     end;
     aux.Free;
   end;
 end;
 
-function TJSChess.BestMoveIndex(const aRecursiveEvaluationResult: integer): integer;
+function TChessProgram.BestMoveIndex(const aRecursiveEvaluationResult: integer): integer;
 var
   aux: TChessPosition;
   i, j: integer;
@@ -801,7 +811,7 @@ begin
   aux.Free;
 end;
   
-function TJSChess.BestMove(out aErr: TBestMoveError): string;
+function TChessProgram.BestMove(out aErr: TBestMoveExitCode): string;
 var
   moveIndex: integer;
   before: boolean;
@@ -813,53 +823,55 @@ begin
   eval := currentPos.RecursiveEvaluation(currentPos.activeColor, 1, 32000);
   moveIndex := BestMoveIndex(eval);
   
-  if moveIndex = 0 then
+  if moveIndex > 0 then
   begin
-    aErr := errMoveNotFound; // Error (cannot find any move)
-    exit;
-  end;
-  
-  Inc(halfmoves);
-  before := currentPos.Check;
-  currentPos.MovePiece(
-    secondMoveList[moveIndex].a,
-    secondMoveList[moveIndex].b,
-    cQueen
-  );
-  currentPos.activeColor := cBlack * currentPos.activeColor;
-  if currentPos.Check then
-    if before then
-      aErr := errCheckmate
-    else
-      aErr := errStalemate
-  else
-  begin
-    result := MoveToStr(
+    Inc(halfmoves);
+    before := currentPos.Check;
+    currentPos.MovePiece(
       secondMoveList[moveIndex].a,
-      secondMoveList[moveIndex].b
+      secondMoveList[moveIndex].b,
+      cQueen
     );
     currentPos.activeColor := cBlack * currentPos.activeColor;
     if currentPos.Check then
-      aErr := errCheck
+      if before then
+        aErr := ecCheckmate
+      else
+        aErr := ecStalemate
     else
-      aErr := errSuccess;
+    begin
+      result := MoveToStr(
+        secondMoveList[moveIndex].a,
+        secondMoveList[moveIndex].b
+      );
+      currentPos.activeColor := cBlack * currentPos.activeColor;
+      if currentPos.Check then
+        aErr := ecCheck
+      else
+        aErr := ecSuccess;
+    end;
+  end else
+  begin
+    aErr := ecError;
   end;
+  if not (aErr in [ecSuccess, ecCheck]) then
+    TLog.Append(Format('bestmove exit code %d'#13#10'%s', [aErr, CurrentBoardAsText()]));
 end;
 
-function TJSChess.BestMove(): string;
+function TChessProgram.BestMove(): string;
 var
-  _: TBestMoveError;
+  _: TBestMoveExitCode;
 begin
   result := BestMove(_);
 end;
 
-procedure TJSChess.SetSearchDepth(const aMinDepth, aMaxDepth: integer);
+procedure TChessProgram.SetSearchDepth(const aMinDepth, aMaxDepth: integer);
 begin
   minDepth := aMinDepth;
   maxDepth := aMaxDepth;
 end;
 
-function TJSChess.CurrentBoardAsText(const aPretty: boolean): string;
+function TChessProgram.CurrentBoardAsText(const aPretty: boolean): string;
 var
   vText, vLine: string;
   x, y: integer;
@@ -882,7 +894,7 @@ begin
     result := vText;
 end;
 
-function TJSChess.FENRecord(): string;
+function TChessProgram.FENRecord(): string;
 begin
   result := currentPos.FENRecord();
 end;
