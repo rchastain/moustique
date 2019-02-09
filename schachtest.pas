@@ -16,7 +16,7 @@ begin
   end else
     vPosition := 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     
-  with TJSChess.Create do
+  with TChessProgram.Create do
   try
     SetPosition(vPosition);
     WriteLn(CurrentBoardAsText());

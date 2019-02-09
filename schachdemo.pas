@@ -11,11 +11,11 @@ var
   vClock: int64;
   vMove: string;
   vCount: integer;
-  vError: TBestMoveError;
+  vError: TBestMoveExitCode;
   
 begin
   vCount := 0;
-  with TJSChess.Create do
+  with TChessProgram.Create do
   try
     SetPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
     repeat
@@ -24,9 +24,9 @@ begin
       vClock := Clock();
       vMove := BestMove(vError);
       vClock := Clock() - vClock;
-      WriteLn(Format(' %s %0.3d ms %s', [vMove, vClock, GetEnumName(TypeInfo(TBestMoveError), Ord(vError))]));
+      WriteLn(Format(' %s %0.3d ms %s', [vMove, vClock, GetEnumName(TypeInfo(TBestMoveExitCode), Ord(vError))]));
       Inc(vCount);
-    until not (vError in [errSuccess, errCheck]) or (vCount = 500);
+    until not (vError in [ecSuccess, ecCheck]) or (vCount = 500);
   finally
     Free;
   end;
