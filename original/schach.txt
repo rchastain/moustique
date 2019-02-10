@@ -1,21 +1,21 @@
 
 Program schachspiel;
-{ Autor:   JÅrgen Schlottke, Schînaich-C.-Str. 46, D-W 2200 Elmshorn
+{ Autor:   J√ºrgen Schlottke, Sch√∂naich-C.-Str. 46, D-W 2200 Elmshorn
            Tel. 04121/63109
   Zweck  : Demonstration der Schachprogrammierung unter Turbo-Pascal
   Datum  : irgendwann 1991, als PD freigegeben am 18.01.93
   Version: ohne Versionsnummer
 }
 
-{$R-,S-,D-,B-,A+}  {Compileroptionen fÅr schnellste ProgrammausfÅhrung}
+{$R-,S-,D-,B-,A+}  {Compileroptionen f√ºr schnellste Programmausf√ºhrung}
 
 uses crt,dos;
 
 const
 quitting:boolean=false;      {Soll das Spiel beendet werden}
-halbzugzahl:integer=0;           {Anzahl der gemachten ZÅge}
-rechentiefe:byte=2;      {Rechentiefe des Computers in HalbzÅgen}
-Maxtiefe:byte=4;           {Maximale Rechentiefe bei SchlagzÅgen}
+halbzugzahl:integer=0;           {Anzahl der gemachten Z√ºge}
+rechentiefe:byte=2;      {Rechentiefe des Computers in Halbz√ºgen}
+Maxtiefe:byte=4;           {Maximale Rechentiefe bei Schlagz√ºgen}
 ohneWert=0;                        {Wert eines leeren Felds}
 bauernwert=2;                       {Wert eines Bauernfelds}
 laeuferwert=6;                                        {etc.}
@@ -23,7 +23,7 @@ springerwert=7;
 Turmwert=10;
 Koenigswert=126;
 Damenwert=19;
-ausserhalb=127;     {Wert eines Felds au·erhalb des Brettes}
+ausserhalb=127;     {Wert eines Felds au√üerhalb des Brettes}
 
          {Bewegungsrichtungen der Figuren auf dem Spielfeld}
 bauer:array[1..4]of shortint=(1,2,-9,11);
@@ -40,7 +40,7 @@ TYPE
     zuglistevon:array[1..100]of byte;         {Ausgangsfeld}
     zuglistenach:array[1..100]of byte;             {Endfeld}
     zugwert:array[1..100] of integer;            {Bewertung}
-    anz:INTEGER;                {Anzahl der gefundenen ZÅge}
+    anz:INTEGER;                {Anzahl der gefundenen Z√ºge}
     material:INTEGER;                       {Materialbilanz}
     farbe:shortINT; {Farbe des am Zug befindlichen Spielers}
   END;
@@ -50,30 +50,30 @@ VAR
   grundbrett:brt;               {Ein Brett in Grundstellung}
   wert,eom:integer;
   varianten:LONGINT;   {Anzahl der berechneten Zugvarianten}
-  mgzugvon:array[1..100] of byte;   {Die bestmîglichen ZÅge}
+  mgzugvon:array[1..100] of byte;   {Die bestm√∂glichen Z√ºge}
   mgzugnach:array[1..100] of byte;
   mgzugwert:array[1..100] of integer;
-  historyvon:array[1..700] of byte; {Speichert 700 HalbzÅge}
+  historyvon:array[1..700] of byte; {Speichert 700 Halbz√ºge}
   historynach:array[1..700] of byte;
   a:CHAR;
-  start,ende:real;           {FÅr Berechnung der Rechenzeit}
+  start,ende:real;           {F√ºr Berechnung der Rechenzeit}
   id: ByTE ABSOLUTE $F000:$FFFE;
 
 procedure vorspann;
 var c:char;
 begin
 clrscr;
-writeln('SCHACH - PD-Software by JÅrgen Schlottke');
+writeln('SCHACH - PD-Software by J√ºrgen Schlottke');
 writeln;
 writeln('Diese Programmversion beherrscht folgende Funktionen:');
 writeln;
-writeln('      -  Nur gÅltige ZÅge werden zugelassen');
+writeln('      -  Nur g√ºltige Z√ºge werden zugelassen');
 writeln('      -  Umwandlung durchgebrachter Bauern in Damen');
-writeln('      -  lange und kurze Rochade sind mîglich (E1G1, E1C1, E8G8, E8C8)');
-writeln('      -  PrÅfung auf Schach fÅr den Spieler sowie Matt&Patt fÅr den Computer');
-writeln('      -  Computer spielt wahlweise schwarz oder wei·');
-writeln('      -  Farbwechsel auch wÑhrend des Spiels mîglich');
-writeln('      -  ZurÅcknehmen von beliebig vielen ZÅgen mîglich');
+writeln('      -  lange und kurze Rochade sind m√∂glich (E1G1, E1C1, E8G8, E8C8)');
+writeln('      -  Pr√ºfung auf Schach f√ºr den Spieler sowie Matt&Patt f√ºr den Computer');
+writeln('      -  Computer spielt wahlweise schwarz oder wei√ü');
+writeln('      -  Farbwechsel auch w√§hrend des Spiels m√∂glich');
+writeln('      -  Zur√ºcknehmen von beliebig vielen Z√ºgen m√∂glich');
 writeln('      -  Schlagen en passant');
 writeln;
 writeln('Das Programm sowie der TP-Quellcode sind als "Public Domain" freigegeben.');
@@ -81,8 +81,8 @@ writeln('EXE-Programm und PAS-Quellcode sollen nur zusammen weitergegeben werden
 writeln('Das Programm darf in der vorliegenden Form frei verwendet werden, Garantien');
 writeln('und Supportleistungen sind ausgeschlossen.');
 writeln;
-writeln('JÅrgen Schlottke');
-writeln('Schînaich-Carolath-Str. 46');
+writeln('J√ºrgen Schlottke');
+writeln('Sch√∂naich-Carolath-Str. 46');
 writeln('D-W 2200 Elmshorn');
 writeln('Tel. 04121/63109');
 writeln;
@@ -109,7 +109,7 @@ begin
   gettime(endhou,endmin,endsec,endhun);
   ende:=endhou*3600+endmin*60+endsec+endhun/100;
   zeit:=ende-start;
-  clrscr; {Ausgabefenster lîschen}
+  clrscr; {Ausgabefenster l√∂schen}
   writeln('Zeit: ',zeit:1:2,' sec');
   if zeit<>0 then zeit:=varianten/zeit else zeit:=9999999;
                  {Falls weniger als 1/18 sec gebraucht wird}
@@ -233,7 +233,7 @@ BEGIN
 loc(1);
 wlstring(1,LEER);wstring(5,FARBE);wlstring(1,LEER);
 loc(2);
-wlstring(1,LEER);Write('KôNIG');wlstring(1,LEER);
+wlstring(1,LEER);Write('K√ñNIG');wlstring(1,LEER);
 loc(3);
 wlstring(1,LEER);wstring(5,FARBE);wlstring(1,LEER);
 END; { koenig}
@@ -255,7 +255,7 @@ BEGIN
 loc(1);
 wlstring(3,LEER);wstring(2,FARBE);wlstring(2,LEER);
 loc(2);
-{wlstring(1,LEER);Write('LéUFER');wlstring(0,LEER);}
+{wlstring(1,LEER);Write('L√ÑUFER');wlstring(0,LEER);}
 wlstring(3,LEER);wstring(2,FARBE);wlstring(2,LEER);
 loc(3);
 wlstring(2,LEER);wstring(4,FARBE);wlstring(1,LEER);
@@ -296,26 +296,26 @@ BEGIN   {brettdarstellung}
     FOR Y:=1 TO 8 DO
       FOR X:=1 TO 8 DO figurausgeben(Y,X);
     gotoxy(1,25);
-    if brett.farbe=1 then write('Wei·')
+    if brett.farbe=1 then write('Wei√ü')
        else write('Schwarz');
     write(' ist am Zug.');clreol;
 END; {brettdarstellung}
 
 
 PROCEDURE setzen(VAR spielbrett:brt; von,nach:byte);
-{Zweck: Einen Zug auf dem Spielbrett ausfÅhren}
+{Zweck: Einen Zug auf dem Spielbrett ausf√ºhren}
 BEGIN
   WITH spielbrett DO
   begin
      {Wenn Bauer zwei Felder zieht,
-                                dann En-Passant ermîglichen}
+                                dann En-Passant erm√∂glichen}
      if (abs(nach-von)=2) and
         (abs(brett[von])=bauernwert) then
        epfeld[farbe]:=von+bauer[1]*farbe
        else epfeld[farbe]:=0;
 
      {Wenn En-Passant-Zug, dann erst den Bauern
-      des Gegners ein Feld zurÅcksetzen}
+      des Gegners ein Feld zur√ºcksetzen}
      if (nach=epfeld[-farbe]) and
         (brett[von]=bauernwert*farbe) then
        begin
@@ -329,7 +329,7 @@ BEGIN
     if (von in [51,58]) and (nach in [71,31,78,38]) and
        (abs(brett[von])=koenigswert) then
     begin                             {Beginnen mit Rochade}
-      brett[nach]:=brett[von];                {Kînig setzen}
+      brett[nach]:=brett[von];                {K√∂nig setzen}
       brett[von]:=0;
       if nach div 10=7 then                  {kurze Rochade}
       begin
@@ -362,7 +362,7 @@ END;   { setzen }
 
 
 PROCEDURE eintragen(var spielbrett:brt;von,nach:shortint);
-{Zweck: Einen gÅltigen Zug in die Zugliste eintragen}
+{Zweck: Einen g√ºltigen Zug in die Zugliste eintragen}
 BEGIN  {eintragen}
   WITH spielbrett DO
   begin
@@ -376,14 +376,14 @@ END; {eintragen}
 
 
 PROCEDURE zuggenerator_ohne(VAR spielbrett:brt);
-{Zweck: Alle mîglichen ZÅgen ermitteln (ohne Rochade)}
+{Zweck: Alle m√∂glichen Z√ºgen ermitteln (ohne Rochade)}
 VAR von,nach:shortint;
     i,j,k,l:byte;
 
 BEGIN  {zuggenerator_ohne}
 WITH spielbrett DO
 begin
-  anz:=0;                       {Anzahl der gefundenen ZÅge}
+  anz:=0;                       {Anzahl der gefundenen Z√ºge}
   for j:=1 to 8 do            {Alle Spielfelder durchlaufen}
   for k:=1 to 8 do
     begin
@@ -459,7 +459,7 @@ begin
              nach:=von+koenig[i];
              if -brett[nach]*farbe in
                          [ohneWert..Koenigswert] then
-             begin   {Testen wo der gegnerische Kînig steht}
+             begin   {Testen wo der gegnerische K√∂nig steht}
                l:=0;
                repeat
                  inc(l);
@@ -490,7 +490,7 @@ END; { zuggenerator_ohne}
 
 
 function schach(VAR spielbrett:brt):BOOLEAN;
-{Zweck: Testen, ob der Kînig im Schach steht}
+{Zweck: Testen, ob der K√∂nig im Schach steht}
 VAR i:byte;
 
 BEGIN  {schach}      {Aufruf nachdem gesetzt wurde}
@@ -503,14 +503,14 @@ BEGIN  {schach}      {Aufruf nachdem gesetzt wurde}
     for i:=1 to anz do
     begin
       if abs(brett[zuglistenach[i]])=koenigswert then
-        schach:=true;    {wenn der Gegner den Kînig erreicht}
+        schach:=true;    {wenn der Gegner den K√∂nig erreicht}
     end; {for}
   end;  {with}
 END;  {schach}
 
 
 PROCEDURE zuggenerator(VAR spielbrett:brt);
-{Zweck: Ermitteln aller ZÅge incl. Rochade}
+{Zweck: Ermitteln aller Z√ºge incl. Rochade}
 procedure Rochade_testen
        (vonkoenig:byte;step:shortint;turmfeld:byte);
 var brett1:brt;i:shortint;
@@ -526,13 +526,13 @@ begin
     brett1:=spielbrett;
     if not schach(brett1) then
       eintragen(spielbrett,vonkoenig,vonkoenig+2*step);
-          {steht der Kînig auch nicht im Schach?}
+          {steht der K√∂nig auch nicht im Schach?}
   end;
 end;
 
 BEGIN {zuggenerator}
-zuggenerator_ohne(spielbrett); {erst normale ZÅge ermitteln}
-WITH spielbrett DO                  {danach die RochadezÅge}
+zuggenerator_ohne(spielbrett); {erst normale Z√ºge ermitteln}
+WITH spielbrett DO                  {danach die Rochadez√ºge}
 begin
   if brett[51]*farbe=koenigswert then
   begin
@@ -557,7 +557,7 @@ VAR minmax,wertung,zugnr:INTEGER;
     alphabetaabbruch:BOOLEAN;
 
 BEGIN  {maxwertung}
-  zuggenerator(spielbrett);        {alle ZÅge incl. Rochade}
+  zuggenerator(spielbrett);        {alle Z√ºge incl. Rochade}
   zugnr:=0;
   beta:=-32000*spielbrett.farbe*farbe;
   alphabetaabbruch:=FALSE;
@@ -611,7 +611,7 @@ while code<>0 do
 begin
   gotoxy(1,21);write('9999 = ENDE');
   gotoxy(1,22);write('9900 = Computer zieht');
-  gotoxy(1,23);write('9001 = ZurÅcknehmen');
+  gotoxy(1,23);write('9001 = Zur√ºcknehmen');
   Gotoxy(1,24);
   Write('Ihr Zug: ');
   clreol;
@@ -650,7 +650,7 @@ begin
 end;
 von:=zug DIV 100;
 nach:=zug MOD 100;
-zuggenerator(spielbrett); {Alle ZÅge incl. Rochade}
+zuggenerator(spielbrett); {Alle Z√ºge incl. Rochade}
 code:=0;
 with spielbrett do
 begin
@@ -673,7 +673,7 @@ END; {spielereingabe}
 
 PROCEDURE computerzug;
 var i,j:byte;
-{Zweck: Den besten Computerzug berechnen und ausfÅhren}
+{Zweck: Den besten Computerzug berechnen und ausf√ºhren}
 
 procedure zugausgeben(von,nach:byte);
 var zugstr:string[5];
@@ -796,12 +796,12 @@ varianten:=0;
 starttime;
 if (id=252) or (id=248) then
 begin
-  rechentiefe:=3;      {Rechentiefe des Computers in HalbzÅgen}
-  Maxtiefe:=5;         {Maximale Rechentiefe bei SchlagzÅgen}
+  rechentiefe:=3;      {Rechentiefe des Computers in Halbz√ºgen}
+  Maxtiefe:=5;         {Maximale Rechentiefe bei Schlagz√ºgen}
 end;
 wert:=maxwertung(spielbrett,spielbrett.farbe,1,32000);
 endtime;
-writeln('Berechnete ZÅge:');
+writeln('Berechnete Z√ºge:');
 i:=besterzug;
 for j:=1 to eom do
   if j<33 then zugausgeben(mgzugvon[j],mgzugnach[j])
