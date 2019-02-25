@@ -14,7 +14,8 @@ type
 implementation
 
 {$IFDEF DEBUG}
-var vLog: text;
+var
+  vLog: text;
 {$ENDIF}
 
 class procedure TLog.Append(const aLine: string);
@@ -26,18 +27,20 @@ begin
 end;
 
 var
-  VFileName: string;
+  vName: string;
   
 initialization
-  vFileName := ChangeFileExt(ParamStr(0), '.log');
+  vName := ChangeFileExt(ParamStr(0), '.log');
 {$IFDEF DEBUG}
-  Assign(vLog, vFileName);
-  if FileExists(vFileName) then
+  Assign(vLog, vName);
+  if FileExists(vName) then
     Append(vLog)
   else
     Rewrite(vLog);
-    
+{$ENDIF}
+
 finalization
+{$IFDEF DEBUG}
   Close(vLog);
 {$ENDIF}
 
