@@ -17,7 +17,8 @@ type
   TCastling = (g1, c1, g8, c8);
 
   TMoveValue = record
-    f, t, v: integer;
+    f, t: shortint;
+    v: integer;
   end;
 
   TMoveList = array[1..100] of TMoveValue;
@@ -25,50 +26,46 @@ type
   TChessPosition = class
   strict private
     board: TChessboard;
-    active: integer;
+    active: shortint;
     castling: array[TCastling] of boolean;
-    enPassant: array[cBlack..cWhite] of integer;
+    enPassant: array[cBlack..cWhite] of shortint;
     moveList: TMoveList;
-    count: integer;
+    count: byte;
     balance: integer;
     twoKings: boolean;
   public
     constructor Create(const aPos: string); overload;
     procedure SetPosition(const aPos: string); overload;
     procedure SetPosition(const aPos: TChessPosition); overload;
-    function Eval(const aColor: integer): integer;
-    function MovePiece(f, t: integer; const aPromo: integer): boolean;
-    procedure AppendMove(const f, t: integer);
+    function Eval(const aColor: shortint): integer;
+    function MovePiece(f, t: shortint; const aPromo: shortint): boolean;
+    procedure AppendMove(const f, t: shortint; const cond: boolean = TRUE);
     procedure GenerateSimpleMoves;
     function Check(): boolean;
-    function CastlingCheck(const aKSquare, aStep: integer): boolean;
-    procedure GenerateCastling(const aKSquare, aStep, aRSquare: integer);
+    function CastlingCheck(const aKSquare, aStep: shortint): boolean;
+    procedure GenerateCastling(const aKSquare, aStep, aRSquare: shortint);
     procedure GenerateMoves;
     function BestEval(const aColor, aDepth, aAlpha: integer): integer;
     function IsLegal(const aMove: integer): boolean;
     function BoardAsText(const aPretty: boolean): string;
     function FEN(): string;
-    property activeColor: integer read active write active;
-    property moveCount: integer read count;
+    property activeColor: shortint read active write active;
+    property moveCount: byte read count;
     property firstList: TMoveList read moveList;
     property chessboard: TChessboard read board;
   end;
 
-var
-  vMinDepth: integer = 3;
-  vMaxDepth: integer = 7;
-  
 implementation
 
 uses
-  Classes, SysUtils, TypInfo, Log;
+  Classes, SysUtils, TypInfo, Log, Settings;
 
 const
-  cVecPawn  : array[1..4] of integer = ( 01,  02, -09,  11);
-  cVecBishop: array[1..4] of integer = ( 11, -11,  09, -09);
-  cVecRook  : array[1..4] of integer = (-01,  01, -10,  10);
-  cVecKnight: array[1..8] of integer = ( 12,  21,  19,  08, -12, -21, -19, -08);
-  cVecKing  : array[1..8] of integer = (-01,  01, -10,  10,  11, -11,  09, -09);
+  cVecPawn  : array[1..4] of shortint = ( 01,  02, -09,  11);
+  cVecBishop: array[1..4] of shortint = ( 11, -11,  09, -09);
+  cVecRook  : array[1..4] of shortint = (-01,  01, -10,  10);
+  cVecKnight: array[1..8] of shortint = ( 12,  21,  19,  08, -12, -21, -19, -08);
+  cVecKing  : array[1..8] of shortint = (-01,  01, -10,  10,  11, -11,  09, -09);
 
 constructor TChessPosition.Create(const aPos: string);
 begin
@@ -155,12 +152,12 @@ begin
   twoKings := aPos.twoKings;
 end;
 
-function TChessPosition.Eval(const aColor: integer): integer;
+function TChessPosition.Eval(const aColor: shortint): integer;
 begin
   result := balance * aColor;
 end;
 
-function TChessPosition.MovePiece(f, t: integer; const aPromo: integer): boolean;
+function TChessPosition.MovePiece(f, t: shortint; const aPromo: shortint): boolean;
 begin
   result := FALSE;
   if board[f] * active = cKing then
@@ -233,9 +230,9 @@ begin
   active := cBlack * active;
 end;
 
-procedure TChessPosition.AppendMove(const f, t: integer);
+procedure TChessPosition.AppendMove(const f, t: shortint; const cond: boolean = TRUE);
 begin
-  if not twoKings then
+  if not (cond and twoKings) then
     exit;
   Inc(count);
   moveList[count].f := f;
@@ -263,23 +260,20 @@ begin
                 if (active = cWhite) and (y = 2) or (active = cBlack) and (y = 7) then
                 begin
                   t := f + cVecPawn[2] * active;
-                  if (board[t] = cNil) then
-                    AppendMove(f, t);
+                  AppendMove(f, t, board[t] = cNil);
                 end;
               end;
               for i := 3 to 4 do
               begin
                 t := f + cVecPawn[i] * active;
-                if (cBlack * board[t] * active in [cPawn..cKing]) or (t = enPassant[cBlack * active]) then
-                  AppendMove(f, t);
+                AppendMove(f, t, (cBlack * board[t] * active in [cPawn..cKing]) or (t = enPassant[cBlack * active]));
               end;
             end;
           cKnight:
             for i := 1 to 8 do
             begin
               t := f + cVecKnight[i];
-              if cBlack * board[t] * active in [cNil..cKing] then
-                AppendMove(f, t);
+              AppendMove(f, t, cBlack * board[t] * active in [cNil..cKing]);
             end;
           cBishop:
             for i := 1 to 4 do
@@ -287,8 +281,7 @@ begin
               t := f;
               repeat
                 Inc(t, cVecBishop[i]);
-                if cBlack * board[t] * active in [cNil..cKing] then
-                  AppendMove(f, t);
+                AppendMove(f, t, cBlack * board[t] * active in [cNil..cKing]);
               until board[t] <> cNil;
             end;
           cRook:
@@ -297,16 +290,14 @@ begin
               t := f;
               repeat
                 Inc(t, cVecRook[i]);
-                if cBlack * board[t] * active in [cNil..cKing] then
-                  AppendMove(f, t);
+                AppendMove(f, t, cBlack * board[t] * active in [cNil..cKing]);
               until board[t] <> 0;
             end;
           cKing:
             for i := 1 to 8 do
             begin
               t := f + cVecKing[i];
-              if cBlack * board[t] * active in [cNil, cPawn, cBishop, cKnight, cRook, cQueen, cKing] then
-                  AppendMove(f, t);
+              AppendMove(f, t, cBlack * board[t] * active in [cNil, cPawn, cBishop, cKnight, cRook, cQueen, cKing]);
             end;
           cQueen:
             for i := 1 to 8 do
@@ -314,8 +305,7 @@ begin
               t := f;
               repeat
                 Inc(t, cVecKing[i]);
-                if cBlack * board[t] * active in [cNil..cKing] then
-                  AppendMove(f, t);
+                AppendMove(f, t, cBlack * board[t] * active in [cNil..cKing]);
               until board[t] <> cNil;
             end;
         end;
@@ -341,28 +331,26 @@ begin
     end;
 end;
 
-function TChessPosition.CastlingCheck(const aKSquare, aStep: integer): boolean;
+function TChessPosition.CastlingCheck(const aKSquare, aStep: shortint): boolean;
 var
   i: integer;
 begin
   result := FALSE;
   active := cBlack * active;
-
   GenerateSimpleMoves;
   active := cBlack * active;
-
   for i := 1 to count do
-    if (moveList[i].t mod 10 = aKSquare mod 10) and ((moveList[i].t - aKSquare) div aStep >= 0) then
-    begin
-      result := TRUE;
-      exit;
-    end;
+    with moveList[i] do
+    if (t mod 10 = aKSquare mod 10)
+    and ((t - aKSquare) div aStep >= 0)
+    and not ((t div 10 = 1) or (t div 10 = 8)) then
+      exit(TRUE);
 end;
 
-procedure TChessPosition.GenerateCastling(const aKSquare, aStep, aRSquare: integer);
+procedure TChessPosition.GenerateCastling(const aKSquare, aStep, aRSquare: shortint);
 var
   vPos: TChessPosition;
-  square: integer;
+  square: shortint;
 begin
   if board[aRSquare] * active <> cRook then
     exit;
@@ -372,25 +360,20 @@ begin
       exit;
     Inc(square, aStep);
   until square = aRSquare;
-
   vPos := TChessPosition.Create;
   vPos.SetPosition(self);
-
   if not vPos.CastlingCheck(aKSquare, aStep) then
     AppendMove(aKSquare, aKSquare + 2 * aStep);
-
   vPos.Free;
 end;
 
 procedure TChessPosition.GenerateMoves;
 begin
   GenerateSimpleMoves;
-  if active = cWhite then
-  begin
+  if active = cWhite then begin
     if castling[g1] then GenerateCastling(51, +10, 81);
     if castling[c1] then GenerateCastling(51, -10, 11);
-  end else
-  begin
+  end else begin
     if castling[g8] then GenerateCastling(58, +10, 88);
     if castling[c8] then GenerateCastling(58, -10, 18);
   end;
@@ -430,7 +413,13 @@ begin
         vStop := TRUE;
     end;
     moveList[i].v := vValue;
+{$IFDEF DEBUG}
+    if aDepth = 1 then with moveList[i] do Write(MoveToStr(100 * f + t), '(', v, ') ');
+{$ENDIF}
   end;
+{$IFDEF DEBUG}
+  if aDepth = 1 then WriteLn;
+{$ENDIF}
   result := vBeta;
   vPos.Free;
 end;

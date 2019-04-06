@@ -14,12 +14,12 @@ var
 
 function GetPlayerMove(const aFENRecord: string; const aMovesArray: array of string): string;
 var
-  _: string;
+  vNewPosition: string;
 begin
   result := 'a1a1';
   if not IsFEN(aFENRecord) then
     exit;
-  _ := vProgram.SetPosition_(aFENRecord, aMovesArray);
+  vNewPosition := vProgram.SetPosition_(aFENRecord, aMovesArray);
   result := vProgram.BestMove;
 end;
 

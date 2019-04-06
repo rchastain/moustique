@@ -11,7 +11,7 @@ unit ChessPlayerTypes;
 interface
 
 type
-  TChessboard = array[-10..109] of integer;
+  TChessboard = array[-10..109] of shortint;
 
 const
   cNil    =   0;
@@ -24,14 +24,20 @@ const
   cQueen  =  19;
   cKing   = 126;
   cBorder = 127;
-
+  (*
+  cColToInt: array['a'..'h'] of integer = (1, 2, 3, 4, 5, 6, 7, 8);
+  cRowToInt: array['1'..'8'] of integer = (1, 2, 3, 4, 5, 6, 7, 8);
+  cDigitToRow: array['1'..'8'] of char = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h');
+  cRowToDigit: array['a'..'h'] of char = ('1', '2', '3', '4', '5', '6', '7', '8');
+  *)
+  
 function ColToInt(const c: char): integer; 
 function RowToInt(const c: char): integer;
 function DigitToRow(const c: char): char;
 procedure MoveToInt(const m: string; var i, p: integer);
-function MoveToStr(const f, t: integer): string;
-function PieceToInt(const p: char): integer;
-function PieceToChar(const p: integer): char;
+function MoveToStr(const iMove: integer): string;
+function PieceToInt(const p: char): shortint;
+function PieceToChar(const p: shortint): char;
 
 implementation
 
@@ -58,9 +64,9 @@ begin
   result := Chr(Ord(c) - Ord('a') + Ord('1'));
 end;
 
-function MoveToStr(const f, t: integer): string;
+function MoveToStr(const iMove: integer): string;
 begin
-  result := IntToStr(100 * f + t);
+  result := IntToStr(iMove);
   result[1] := DigitToRow(result[1]);
   result[3] := DigitToRow(result[3]);
 end;
@@ -83,7 +89,7 @@ begin
     end;
 end;
 
-function PieceToInt(const p: char): integer;
+function PieceToInt(const p: char): shortint;
 begin
   case p of
     'P': result := cWhite * cPawn;
@@ -103,7 +109,7 @@ begin
   end;
 end;
 
-function PieceToChar(const p: integer): char;
+function PieceToChar(const p: shortint): char;
 begin
   case p of
     cWhite * cPawn  : result := 'P';

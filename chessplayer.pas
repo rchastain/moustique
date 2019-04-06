@@ -26,7 +26,6 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure SetPosition(const aPos: string);
-    procedure SetDepth(const aMin, aMax: integer);
     function PlayMove(const aMove: string): boolean;
     function BestMoveIndex(const aBestValue: integer): integer;
     function BestMove(out aCode: TExitCode): string; overload;
@@ -78,33 +77,27 @@ begin
   FHalfmovesCount := GetMoveCount(aPos);
 end;
 
-procedure TChessPlayer.SetDepth(const aMin, aMax: integer);
-begin
-  vMinDepth := aMin;
-  vMaxDepth := aMax;
-end;
-
 function TChessPlayer.PlayMove(const aMove: string): boolean;
 var
   aux: TChessPosition;
-  i, promo, f, t: integer;
+  iMove, iPromo, iFromSquare, iToSquare: integer;
 begin
-  MoveToInt(aMove, i, promo);
-  f := i div 100;
-  t := i mod 100;
+  MoveToInt(aMove, iMove, iPromo);
+  iFromSquare := iMove div 100;
+  iToSquare := iMove mod 100;
   FCurPos.GenerateMoves;
-  result := FCurPos.IsLegal(i);
+  result := FCurPos.IsLegal(iMove);
   if result then
   begin
     aux := TChessPosition.Create;
     aux.SetPosition(FCurPos);
-    aux.MovePiece(f, t, promo);
+    aux.MovePiece(iFromSquare, iToSquare, iPromo);
     aux.activeColor := cBlack * aux.activeColor;
     if aux.Check then
       result := FALSE
     else
     begin
-      FCurPos.MovePiece(f, t, promo);
+      FCurPos.MovePiece(iFromSquare, iToSquare, iPromo);
       Inc(FHalfmovesCount);
     end;
     aux.Free;
@@ -150,7 +143,10 @@ begin
       end;
 
       if chessboard[FSecondList[i].f] * activeColor = cKing then
-        Dec(FSecondList[i].v, 10);
+        if Abs(FSecondList[i].t - FSecondList[i].f) = 20 then
+          Inc(FSecondList[i].v, 20)
+        else
+          Dec(FSecondList[i].v, 10);
 
       if (FHalfmovesCount < 32) and (chessboard[FSecondList[i].f] * activeColor in [cPawn, cBishop, cKnight]) then
         Inc(FSecondList[i].v, 20);
@@ -195,21 +191,25 @@ begin
         if chessboard[firstList[j].t] <> cNil then
           Dec(FSecondList[i].v);
       end;
-
+{$IFDEF DEBUG}
+      with FSecondList[i] do Write(MoveToStr(100 * f + t), '(', v, ') ');
+{$ENDIF}
     if FSecondList[i].v >= maxValue then
     begin
       maxValue := FSecondList[i].v;
       result := i;
     end;
   end;
-
+{$IFDEF DEBUG}
+  WriteLn;
+{$ENDIF}
   aux.Free;
 end;
 
 function TChessPlayer.BestMove(out aCode: TExitCode): string;
 const
-  C1: array[boolean] of TExitCode = (ecStalemate, ecCheckmate);
-  C2: array[boolean] of TExitCode = (ecSuccess, ecCheck);
+  CCodeIllegalMove: array[boolean] of TExitCode = (ecStalemate, ecCheckmate);
+  CCodeLegalMove: array[boolean] of TExitCode = (ecSuccess, ecCheck);
 var
   i: integer;
   checkBefore, prom: boolean;
@@ -225,14 +225,14 @@ begin
       prom := FCurPos.MovePiece(f, t, cQueen);
     FCurPos.activeColor := cBlack * FCurPos.activeColor;
     if FCurPos.Check then
-      aCode := C1[checkBefore]
+      aCode := CCodeIllegalMove[checkBefore]
     else
     begin
       with FSecondList[i] do
-        result := MoveToStr(f, t);
+        result := MoveToStr(100 * f + t);
       if prom then result := result + 'q';
       FCurPos.activeColor := cBlack * FCurPos.activeColor;
-      aCode := C2[FCurPos.Check];
+      aCode := CCodeLegalMove[FCurPos.Check];
     end;
   end else
     aCode := ecError;
