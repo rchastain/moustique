@@ -343,7 +343,7 @@ begin
     with moveList[i] do
     if (t mod 10 = aKSquare mod 10)
     and ((t - aKSquare) div aStep >= 0)
-    and not ((t div 10 = 1) or (t div 10 = 8)) then
+    and ((t - aKSquare) div aStep <= 2) then
       exit(TRUE);
 end;
 
