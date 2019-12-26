@@ -7,26 +7,26 @@ const
   FEN2 = '8/4k3/1p1p2p1/p1pP2P1/P1P2K2/1P6/8/8 w - -';
   
 var
-  vPos: TChessPosition;
+  LPos: TChessPosition;
   i: integer;
   
 begin
   (* Création et initialisation de l'échiquier. *)
-  vPos := TChessPosition.Create(FEN2);
+  LPos := TChessPosition.Create(FEN2);
   (* Affichage de l'échiquier. *)
-  WriteLn(#13#10, vPos.BoardAsText(TRUE), #13#10);
+  WriteLn(#13#10, LPos.BoardAsText(TRUE), #13#10);
   (* Évaluation des coups. *)
-  WriteLn(vPos.BestEval(vPos.activeColor, 1, 32000));
+  WriteLn(LPos.BestEval(LPos.activeColor, 1, 32000));
   (* Affichage des coups dont la note est différente de 0. *)
-  for i := 1 to vPos.moveCount do
-    with vPos.firstList[i] do
-      if v <> 0 then
+  for i := 1 to LPos.moveCount do
+    with LPos.firstList[i] do
+      if FValue <> 0 then
         WriteLn(Format('  %s %d', [
-          MoveToStr(f, t),
-          v
+          MoveToStr(100 * FFrom + FTo),
+          FValue
         ]));
   
-  vPos.Free;
+  LPos.Free;
 end.
 
 {
