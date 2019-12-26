@@ -7,9 +7,9 @@ uses
   Classes;
 
 type
-  TUCICommand =
+  TUciCommand =
   (
-    cmdUCI,
+    cmdUci,
     cmdQuit,
     cmdNewGame,
     cmdPositionFen,
@@ -20,15 +20,16 @@ type
     cmdUnknown
   );
 
-  TUCICommandParser = class
-    //private
-      moves: TStringList;
-      position: string;
-    //protected
+  TUciCommandParser = class
+    private
+      FMoves: TStringList;
+      FPosition: string;
+    public
       constructor Create;
       destructor Destroy; override;
-    //public
-      function ParseCommand(const aCommand: string): TUCICommand;
+      function ParseCommand(const ACommand: string): TUciCommand;
+      property Moves: TStringList read FMoves;
+      property Position: string read FPosition;
   end;
 
 implementation
@@ -36,43 +37,43 @@ implementation
 uses
   Expressions;
 
-constructor TUCICommandParser.Create;
+constructor TUciCommandParser.Create;
 begin
-  moves := Expressions.list;
+  FMoves := Expressions.LMoveList;
 end;
 
-destructor TUCICommandParser.Destroy;
+destructor TUciCommandParser.Destroy;
 begin
   inherited Destroy;
 end;
 
-function TUCICommandParser.ParseCommand(const aCommand: string): TUCICommand;
+function TUciCommandParser.ParseCommand(const ACommand: string): TUciCommand;
 begin
-  if aCommand = 'uci' then
-    result := cmdUCI
+  if ACommand = 'uci' then
+    result := cmdUci
   else
-    if aCommand = 'quit' then
+    if ACommand = 'quit' then
       result := cmdQuit
     else
-      if aCommand = 'ucinewgame' then
+      if ACommand = 'ucinewgame' then
         result := cmdNewGame
       else
-        if (Pos('position fen', aCommand) = 1)
-        and ExtractFEN(aCommand, position) then
+        if (Pos('position fen', ACommand) = 1)
+        and ExtractFen(ACommand, FPosition) then
           result := cmdPositionFen
         else
-          if (Pos('position startpos', aCommand) = 1) then
+          if (Pos('position startpos', ACommand) = 1) then
           begin
             result := cmdPositionStartPos;
-            ExtractMoves(aCommand);
+            ExtractMoves(ACommand);
           end else
-            if Pos('go', aCommand) = 1 then
+            if Pos('go', ACommand) = 1 then
               result := cmdGo
             else
-              if aCommand = 'isready' then
+              if ACommand = 'isready' then
                 result := cmdIsReady
               else
-                if aCommand = 'stop' then
+                if ACommand = 'stop' then
                   result := cmdStop
                 else
                   result := cmdUnknown;

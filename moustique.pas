@@ -5,27 +5,31 @@ uses
 {$IFDEF UNIX}
   CThreads, CWString,
 {$ENDIF}
-  Classes, SysUtils, ChessPlayer, Uci, Expressions, Log;
+  Classes, SysUtils, ChessPlayer, Uci, Expressions, Log, Settings, Book;
 
 {$INCLUDE version.inc}
 
 var
-  vProgram: TChessPlayer;
+  LChessPlayer: TChessPlayer;
 
-function GetPlayerMove(const aFENRecord: string; const aMovesArray: array of string): string;
+function GetPlayerMove(const AFenRecord: string; const AMovesArray: array of string): string;
 var
-  vNewPosition: string;
+  LResultFen: string;
 begin
   result := 'a1a1';
-  if not IsFEN(aFENRecord) then
-    exit;
-  vNewPosition := vProgram.SetPosition_(aFENRecord, aMovesArray);
-  result := vProgram.BestMove;
+  if not IsFen(AFenRecord) then
+    Exit;
+  LResultFen := LChessPlayer.SetPositionFromMoves(AFenRecord, AMovesArray);
+  result := Book.BestMove(LResultFen, LBook);
+  if result <> '' then
+    TLog.Append(Format('book move %s', [result]))
+  else
+    result := LChessPlayer.BestMove;
 end;
 
 var
-  vPosition: string;
-  vMovesArray: array of string;
+  LPosition: string;
+  LMovesArray: array of string;
 
 type
   TBestMoveThread = class(TThread)
@@ -35,66 +39,65 @@ type
 
 procedure TBestMoveThread.Execute;
 var
-  vMove: string;
+  LMove: string;
 begin
-  vMove := GetPlayerMove(vPosition, vMovesArray);
-  SetLength(vMovesArray, 0);
-  WriteLn(output, Format('bestmove %s', [vMove]));
+  LMove := GetPlayerMove(LPosition, LMovesArray);
+  SetLength(LMovesArray, 0);
+  WriteLn(output, Format('bestmove %s', [LMove]));
   Flush(output);
 end;
 
 const
-  CONVENTSTARTPOS = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  CTraditionalStartPos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 var
-  vParser: TUCICommandParser;
-  vCommand: string;
-  vStop: boolean = FALSE;
-  vUciCommand: TUCICommand;
-  vThread: TBestMoveThread;
-  vIndex: integer;
+  LParser: TUciCommandParser;
+  LCommand: string;
+  LUciCommand: TUciCommand;
+  LThread: TBestMoveThread;
+  LIndex: integer;
 
 begin
-  TLog.Append(Format('Moustique %s %s %s Free Pascal %s', [APPVERSION, {$I %DATE%}, {$I %TIME%}, {$I %FPCVERSION%}]));
+  TLog.Append(Format('Moustique %s %s %s Free Pascal %s', [CAppVersion, {$I %DATE%}, {$I %TIME%}, {$I %FPCVERSION%}]));
   
-  vProgram := TChessPlayer.Create;
-  vParser := TUCICommandParser.Create;
-  vPosition := CONVENTSTARTPOS;
-  SetLength(vMovesArray, 0);
+  LChessPlayer := TChessPlayer.Create;
+  LParser := TUciCommandParser.Create;
+  LPosition := CTraditionalStartPos;
+  SetLength(LMovesArray, 0);
 
-  repeat
-    Sleep(10);
-    ReadLn(input, vCommand);
-    TLog.Append('>>> ' + vCommand);
+  while not Eof do
+  begin
+    ReadLn(input, LCommand);
+    TLog.Append('> ' + LCommand);
 
-    vUciCommand := vParser.ParseCommand(vCommand);
-    case vUciCommand of
-      cmdUCI:
+    LUciCommand := LParser.ParseCommand(LCommand);
+    case LUciCommand of
+      cmdUci:
         begin
-          WriteLn(output, 'id name ' + APPNAME + ' ' + APPVERSION);
-          WriteLn(output, 'id author ' + APPAUTHOR);
+          WriteLn(output, 'id name ' + CAppName + ' ' + CAppVersion);
+          WriteLn(output, 'id author ' + CAppAuthor);
           WriteLn(output, 'uciok');
           Flush(output);
         end;
       cmdQuit:
-        vStop := TRUE;
+        Break;
       cmdNewGame:
-        vPosition := CONVENTSTARTPOS;
+        LPosition := CTraditionalStartPos;
       cmdPositionFen:
-        vPosition := vParser.position;
+        LPosition := LParser.Position;
       cmdPositionStartPos:
         begin
-          vPosition := CONVENTSTARTPOS;
-          SetLength(vMovesArray, vParser.moves.Count);
-          for vIndex := 0 to Pred(vParser.moves.Count) do
-            vMovesArray[vIndex] := vParser.moves[vIndex];
+          LPosition := CTraditionalStartPos;
+          SetLength(LMovesArray, LParser.Moves.Count);
+          for LIndex := 0 to Pred(LParser.Moves.Count) do
+            LMovesArray[LIndex] := LParser.Moves[LIndex];
         end;
       cmdGo:
         begin
-          vThread := TBestMoveThread.Create(TRUE);
-          vThread.FreeOnTerminate := TRUE;
-          vThread.Priority := tpHigher;
-          vThread.Start;
+          LThread := TBestMoveThread.Create(TRUE);
+          LThread.FreeOnTerminate := TRUE;
+          LThread.Priority := tpHigher;
+          LThread.Start;
         end;
       cmdIsReady:
         begin
@@ -103,13 +106,16 @@ begin
         end;
       cmdStop:
         begin
+          WriteLn(output, Format('bestmove %s', ['a1a1']));
+          Flush(output);
         end;
       cmdUnknown:
         begin
+          TLog.Append(Format('Unknown command: %s', [LCommand]));
         end;
     end;
-  until vStop;
+  end;
   
-  vProgram.Free;
-  vParser.Free;
+  LChessPlayer.Free;
+  LParser.Free;
 end.

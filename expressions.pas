@@ -6,12 +6,12 @@ interface
 uses
   SysUtils, Classes;
   
-function IsFEN(const aStr: string): boolean;
-function ExtractFEN(const aCommand: string; var aFEN: string): boolean;
-function ExtractMoves(const aCommand: string): boolean;
+function IsFen(const AStr: string): boolean;
+function ExtractFen(const ACommand: string; var AFen: string): boolean;
+function ExtractMoves(const ACommand: string): boolean;
 
 var
-  list: TStringList;
+  LMoveList: TStringList;
   
 implementation
 
@@ -19,144 +19,134 @@ uses
   RegExpr;
 
 type
-  TValidator = class
+  TFenValidator = class
     public
-      function ExpandEmptySquares(ARegExpr: TRegExpr): string;
-      function IsFEN(const aInputStr: string): boolean;
+      function ExpandEmptySquares(AExpr: TRegExpr): string;
+      function IsFen(const AInputStr: string): boolean;
   end;
 
-function IsFEN(const aStr: string): boolean;
+function IsFen(const AStr: string): boolean;
 var
-  vld: TValidator;
+  LValidator: TFenValidator;
 begin
-  vld := TValidator.Create;
-  result := vld.IsFen(aStr);
-  vld.Free;
+  LValidator := TFenValidator.Create;
+  result := LValidator.IsFen(AStr);
+  LValidator.Free;
 end;
 
-function TValidator.ExpandEmptySquares(aRegExpr: TRegExpr): string;
-const
-  SYMBOL = '-';
+function TFenValidator.ExpandEmptySquares(AExpr: TRegExpr): string;
 begin
-  result := '';
-  with aRegExpr do
-    result := StringOfChar(SYMBOL, StrToInt(Match[0]));
+  result := StringOfChar('-', StrToInt(AExpr.Match[0]));
 end;
 
-function TValidator.IsFEN(const aInputStr: string): boolean;
+function TFenValidator.IsFen(const AInputStr: string): boolean;
 const
-  WHITEKING = 'K';
-  BLACKKING = 'k';
-  PIECES    = '^[1-8BKNPQRbknpqr]+$';
-  ACTIVE    = '^[wb]$';
-  CASTLING  = '^[KQkq]+$|^[A-Ha-h]+$|^\-$';
-  ENPASSANT = '^[a-h][36]$|^\-$';
-  HALFMOVE  = '^\d+$';
-  FULLMOVE  = '^[1-9]\d*$';
+  CWhiteKing = 'K';
+  CBlackKing = 'k';
+  CPieces    = '^[1-8BKNPQRbknpqr]+$';
+  CActive    = '^[wb]$';
+  CCastling  = '^[KQkq]+$|^[A-Ha-h]+$|^\-$';
+  CEnPassant = '^[a-h][36]$|^\-$';
+  CHalfMove  = '^\d+$';
+  CFullMove  = '^[1-9]\d*$';
 var
-  a, b: TStrings;
+  LFields, LPieces: TStringList;
+  LExpr: TRegExpr;
   i: integer;
-  e: TRegExpr;
   s: string;
-  
 begin
-  a := TStringList.Create;
-  b := TStringList.Create;
-  
-  e := TRegExpr.Create;
-  e.Expression := '\d';
-  
+  LFields := TStringList.Create;
+  LPieces := TStringList.Create;
+  LExpr := TRegExpr.Create('\d');
   (*
-  ExtractStrings([' '], [], PChar(aInputStr), a);
-  ExtractStrings(['/'], [], PChar(a[0]), b);
+  ExtractStrings([' '], [], PChar(AInputStr), LFields);
+  ExtractStrings(['/'], [], PChar(LFields[0]), LPieces);
   *)
-  
-  SplitRegExpr(' ', aInputStr, a);
-  
-  result := (a.Count = 6);
+  SplitRegExpr(' ', AInputStr, LFields);
+  result := (LFields.Count = 6);
 
   if result then
   begin
-    SplitRegExpr('/', a[0], b);
-    result := (b.Count = 8);
+    SplitRegExpr('/', LFields[0], LPieces);
+    result := (LPieces.Count = 8);
   end;
   
   if result then
   begin
-    result := result and ExecRegExpr(WHITEKING, a[0]);
-    result := result and ExecRegExpr(BLACKKING, a[0]);
+    result := result and ExecRegExpr(CWhiteKing, LFields[0]);
+    result := result and ExecRegExpr(CBlackKing, LFields[0]);
 
     for i := 0 to 7 do
     begin
-      result := result and ExecRegExpr(PIECES, b[i]);
+      result := result and ExecRegExpr(CPieces, LPieces[i]);
       if result then
       begin
-        s := b[i];
+        s := LPieces[i];
         repeat
-          s := e.Replace(s, @ExpandEmptySquares);
+          s := LExpr.Replace(s, @ExpandEmptySquares);
         until not ExecRegExpr('\d', s);
         result := result and (Length(s) = 8);
       end;
     end;
     
-    result := result and ExecRegExpr(ACTIVE,    a[1]);
-    result := result and ExecRegExpr(CASTLING,  a[2]);
-    result := result and ExecRegExpr(ENPASSANT, a[3]);
-    result := result and ExecRegExpr(HALFMOVE,  a[4]);
-    result := result and ExecRegExpr(FULLMOVE,  a[5]);
+    result := result and ExecRegExpr(CActive,    LFields[1]);
+    result := result and ExecRegExpr(CCastling,  LFields[2]);
+    result := result and ExecRegExpr(CEnPassant, LFields[3]);
+    result := result and ExecRegExpr(CHalfMove,  LFields[4]);
+    result := result and ExecRegExpr(CFullMove,  LFields[5]);
   end;
 
-  a.Free;
-  b.Free;
-  e.Free;
+  LFields.Free;
+  LPieces.Free;
+  LExpr.Free;
 end;
 
 const
-  PATTERN_PIECES = '[1-8BKNPQRbknpqr]+';
-  PATTERN_ACTIVECOLOR = '[wb]';
-  PATTERN_CASTLING = '([KQkq]+|-)';
-  PATTERN_ENPASSANT = '([a-h][1-8]|-)';
-  PATTERN_NUMBER = '\d+';
-  PATTERN_MOVE = '\b[a-h][1-8][a-h][1-8][nbrq]?\b';
+  CPatternPieces = '[1-8BKNPQRbknpqr]+';
+  CPatternActiveColor = '[wb]';
+  CPatternCastling = '([KQkq]+|-)';
+  CPatternEnPassant = '([a-h][1-8]|-)';
+  CPatternNumber = '\d+';
+  CPatternMove = '\b[a-h][1-8][a-h][1-8][nbrq]?\b';
   
 var
-  fenPattern: string;
-  efen, emove: TRegExpr;
+  LFenPattern: string;
+  LExprFen, LExprMove: TRegExpr;
 
-function ExtractFEN(const aCommand: string; var aFEN: string): boolean;
+function ExtractFen(const ACommand: string; var AFen: string): boolean;
 begin
-  result := efen.Exec(aCommand);
+  result := LExprFen.Exec(ACommand);
   if result then
-    aFEN := efen.Match[0];
+    AFen := LExprFen.Match[0];
 end;
 
-function ExtractMoves(const aCommand: string): boolean;
+function ExtractMoves(const ACommand: string): boolean;
 begin
-  list.Clear;
-  result := emove.Exec(aCommand);
+  LMoveList.Clear;
+  result := LExprMove.Exec(ACommand);
   if result then 
     repeat 
-      list.Append(emove.Match[0]);
-    until not emove.ExecNext;
+      LMoveList.Append(LExprMove.Match[0]);
+    until not LExprMove.ExecNext;
 end;
 
 initialization
-  fenPattern := Format('%s %s %s %s %s %s', [
-    ReplaceRegExpr('x', 'x/x/x/x/x/x/x/x', PATTERN_PIECES, false),
-    PATTERN_ACTIVECOLOR,
-    PATTERN_CASTLING,
-    PATTERN_ENPASSANT,
-    PATTERN_NUMBER,
-    PATTERN_NUMBER
+  LFenPattern := Format('%s %s %s %s %s %s', [
+    ReplaceRegExpr('x', 'x/x/x/x/x/x/x/x', CPatternPieces, false),
+    CPatternActiveColor,
+    CPatternCastling,
+    CPatternEnPassant,
+    CPatternNumber,
+    CPatternNumber
   ]);
   
-  list := TStringList.Create;
-  efen := TRegExpr.Create(fenPattern);
-  emove := TRegExpr.Create(PATTERN_MOVE);
+  LMoveList := TStringList.Create;
+  LExprFen := TRegExpr.Create(LFenPattern);
+  LExprMove := TRegExpr.Create(CPatternMove);
   
 finalization
-  list.Free;
-  efen.Free;
-  emove.Free;
+  LMoveList.Free;
+  LExprFen.Free;
+  LExprMove.Free;
   
 end.

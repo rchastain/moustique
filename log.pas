@@ -8,40 +8,40 @@ uses
 
 type
   TLog = class
-    class procedure Append(const aLine: string);
+    class procedure Append(const AStr: string);
   end;
 
 implementation
 
 {$IFDEF DEBUG}
 var
-  vLog: text;
+  LFile: text;
 {$ENDIF}
 
-class procedure TLog.Append(const aLine: string);
+class procedure TLog.Append(const AStr: string);
 begin
 {$IFDEF DEBUG}
-  WriteLn(vLog, DateTimeToStr(Now()) + ' ' + aLine);
-  Flush(vLog);
+  WriteLn(LFile, DateTimeToStr(Now) + ' ' + AStr);
+  Flush(LFile);
 {$ENDIF}
 end;
 
 var
-  vName: string;
+  LFileName: string;
   
 initialization
-  vName := ChangeFileExt(ParamStr(0), '.log');
+  LFileName := ChangeFileExt(ParamStr(0), '.log');
 {$IFDEF DEBUG}
-  Assign(vLog, vName);
-  if FileExists(vName) then
-    Append(vLog)
+  Assign(LFile, LFileName);
+  if FileExists(LFileName) then
+    Append(LFile)
   else
-    Rewrite(vLog);
+    Rewrite(LFile);
 {$ENDIF}
 
 finalization
 {$IFDEF DEBUG}
-  Close(vLog);
+  Close(LFile);
 {$ENDIF}
 
 end.

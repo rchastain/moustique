@@ -7,51 +7,55 @@ uses
   SysUtils, IniFiles;
 
 var
-  vMinDepth, vMaxDepth: integer;
-
+  LMinDepth, LMaxDepth: integer;
+  LBook: string;
+  
 implementation
 
 const
-  cSection = 'settings';
+  CSection = 'settings';
 
 var
-  vFileName: TFileName;
+  LFileName: TFileName;
 
 procedure ReadIniFile;
 const
-  cDefaultMinDepth = 3;
-  cDefaultMaxDepth = 7;
+  CDefaultMinDepth = 3;
+  CDefaultMaxDepth = 7;
+  CDefaultBook = 'gm2001.bin';
 var
-  vFile: TIniFile;
+  LFile: TIniFile;
 begin
-  vFile := TIniFile.Create(vFileName);
+  LFile := TIniFile.Create(LFileName);
   try
-    vMinDepth := vFile.ReadInteger(cSection, 'mindepth', cDefaultMinDepth);
-    vMaxDepth := vFile.ReadInteger(cSection, 'maxdepth', cDefaultMaxDepth);
+    LMinDepth := LFile.ReadInteger(CSection, 'mindepth', CDefaultMinDepth);
+    LMaxDepth := LFile.ReadInteger(CSection, 'maxdepth', CDefaultMaxDepth);
+    LBook := LFile.ReadString(CSection, 'book', CDefaultBook);
   finally
-    vFile.Free;
+    LFile.Free;
   end;
 end;
 
 procedure WriteIniFile;
 var
-  vFile: TIniFile;
+  LFile: TIniFile;
 begin
-  vFile := TIniFile.Create(vFileName);
+  LFile := TIniFile.Create(LFileName);
   try
-    vFile.WriteInteger(cSection, 'mindepth', vMinDepth);
-    vFile.WriteInteger(cSection, 'maxdepth', vMaxDepth);
+    LFile.WriteInteger(CSection, 'mindepth', LMinDepth);
+    LFile.WriteInteger(CSection, 'maxdepth', LMaxDepth);
+    LFile.WriteString(CSection, 'book', LBook);
   finally
-    vFile.Free;
+    LFile.Free;
   end;
 end;
 
 initialization
-  vFileName := ChangeFileExt(ParamStr(0), '.ini');
+  LFileName := ChangeFileExt(ParamStr(0), '.ini');
   ReadIniFile;
 
 finalization
-  if not FileExists(vFileName) then
+  if not FileExists(LFileName) then
     WriteIniFile;
 
 end.
