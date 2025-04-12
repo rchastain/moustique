@@ -7,4 +7,6 @@ Jürgen Schlottke's didactic chess program, with a basic UCI interface.
 
 Moustique 0.3 uses the small [Polyglot book](http://www.open-aurec.com/chesswar/download.html) by Olivier Deville.
 
-Project moved to https://gitlab.com/rchastain/moustique
+## Migration warning
+
+The project has moved to [Codeberg](https://codeberg.org/rchastain/moustique).
